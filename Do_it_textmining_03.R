@@ -219,3 +219,40 @@ frequency_wide %>%
   filter(moon >= 5 & park >= 5) %>% 
   arrange(abs(1 - odds_ratio)) %>% 
   head(10)
+
+### 03-3 로그 오즈비로 단어 비교하기
+## 로그 오즈비 구하기
+frequency_wide <- frequency_wide %>% 
+  mutate(log_odds_ratio = log(odds_ratio))
+
+# moon에서 비중이 큰 단어
+frequency_wide %>% 
+  arrange(log_odds_ratio)
+
+# 비중이 비슷한 단어
+frequency_wide %>% 
+  arrange(abs(log_odds_ratio))
+
+# 로그 오즈비 간단히 구하기
+frequency_wide <- frequency_wide %>% 
+  mutate(log_odds_ratio = log(((moon + 1) / (sum(moon + 1))) /
+                              ((park + 1) / (sum(park + 1)))))
+
+## 로그 오즈비를 이용해 중요한 단어 비교하기
+top10 <- frequency_wide %>% 
+  group_by(president = ifelse(log_odds_ratio > 0, "moon", "park")) %>% 
+  slice_max(abs(log_odds_ratio), n = 10, with_ties = F)
+
+top10 %>% 
+  arrange(-log_odds_ratio) %>% 
+  select(word, log_odds_ratio, president) %>% 
+  print(n = Inf)
+
+
+## 막대 그래프 만들기
+ggplot(top10, aes(x = reorder(word, log_odds_ratio),
+                  y = log_odds_ratio,
+                  fill = president)) +
+  geom_col() +
+  coord_flip() +
+  labs(x = NULL)
